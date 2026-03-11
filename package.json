@@ -8,6 +8,7 @@
     "check": "next lint && tsc --noEmit",
     "db:generate": "prisma migrate dev",
     "db:migrate": "prisma migrate deploy",
+    "db:seed:e2e": "prisma db execute --schema prisma/schema.prisma --file scripts/seed-e2e.sql",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "dev": "next dev --turbo",
@@ -19,6 +20,8 @@
     "preview": "next build && next start",
     "start": "next start",
     "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },
@@ -47,6 +50,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4.0.15",
     "@types/node": "^20.14.10",
     "@types/react": "^19.0.0",

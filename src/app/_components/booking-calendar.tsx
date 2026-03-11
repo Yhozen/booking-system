@@ -43,7 +43,7 @@ export function BookingCalendar() {
       <header className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-xl font-semibold">Bookings Week View</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground" data-testid="week-range-label">
             {formatRange(weekStart, weekEnd)}
           </p>
         </div>
@@ -52,6 +52,7 @@ export function BookingCalendar() {
           <Button
             variant="outline"
             size="sm"
+            data-testid="week-nav-prev"
             onClick={() => setWeekStart((previous) => addDays(previous, -7))}
           >
             <ChevronLeft />
@@ -60,6 +61,7 @@ export function BookingCalendar() {
           <Button
             variant="outline"
             size="sm"
+            data-testid="week-nav-today"
             onClick={() => setWeekStart(getStartOfWeek(new Date()))}
           >
             Today
@@ -67,6 +69,7 @@ export function BookingCalendar() {
           <Button
             variant="outline"
             size="sm"
+            data-testid="week-nav-next"
             onClick={() => setWeekStart((previous) => addDays(previous, 7))}
           >
             Next
@@ -77,16 +80,16 @@ export function BookingCalendar() {
 
       <div className="grid gap-3 rounded-xl border border-border bg-card p-4 text-sm md:grid-cols-4">
         <p>
-          Total: <span className="font-semibold">{statusCounts.total}</span>
+          Total: <span className="font-semibold" data-testid="stat-total">{statusCounts.total}</span>
         </p>
         <p>
-          Confirmed: <span className="font-semibold">{statusCounts.confirmed}</span>
+          Confirmed: <span className="font-semibold" data-testid="stat-confirmed">{statusCounts.confirmed}</span>
         </p>
         <p>
-          Pending: <span className="font-semibold">{statusCounts.pending}</span>
+          Pending: <span className="font-semibold" data-testid="stat-pending">{statusCounts.pending}</span>
         </p>
         <p>
-          Cancelled: <span className="font-semibold">{statusCounts.cancelled}</span>
+          Cancelled: <span className="font-semibold" data-testid="stat-cancelled">{statusCounts.cancelled}</span>
         </p>
       </div>
 

@@ -195,6 +195,7 @@ export function WeekView({ weekStart, bookings, className }: WeekViewProps) {
 
   return (
     <section
+      data-testid="week-view"
       className={cn(
         "overflow-hidden rounded-xl border border-border bg-card text-card-foreground",
         className,
@@ -215,7 +216,7 @@ export function WeekView({ weekStart, bookings, className }: WeekViewProps) {
         ))}
       </div>
 
-      <div className="max-h-[72vh] overflow-auto">
+      <div className="max-h-[72vh] overflow-auto" data-testid="week-view-scroll">
         <div
           className="grid"
           style={{ gridTemplateColumns: `${TIME_AXIS_WIDTH}px repeat(7, minmax(0, 1fr))` }}
@@ -256,6 +257,7 @@ export function WeekView({ weekStart, bookings, className }: WeekViewProps) {
                   return (
                     <article
                       key={`${segment.id}-${segment.start.toISOString()}`}
+                      data-testid="booking-card"
                       className={cn(
                         "absolute z-10 overflow-hidden rounded-md border px-2 py-1 shadow-sm",
                         STATUS_STYLES[segment.status] ??
@@ -291,7 +293,10 @@ export function WeekView({ weekStart, bookings, className }: WeekViewProps) {
       </div>
 
       {bookings.length === 0 ? (
-        <p className="border-t border-border p-3 text-sm text-muted-foreground">
+        <p
+          className="border-t border-border p-3 text-sm text-muted-foreground"
+          data-testid="week-empty"
+        >
           No bookings in this week.
         </p>
       ) : null}
