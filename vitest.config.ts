@@ -9,6 +9,7 @@ export default defineConfig({
   },
   test: {
     clearMocks: true,
+    globalSetup: ["./src/test/global-setup.ts"],
     include: ["src/**/*.test.ts"],
     passWithNoTests: false,
     restoreMocks: true,
