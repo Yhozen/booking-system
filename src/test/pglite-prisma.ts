@@ -4,8 +4,7 @@ import { promisify } from "node:util";
 
 import { PGlite } from "@electric-sql/pglite";
 import { btree_gist } from "@electric-sql/pglite/contrib/btree_gist";
-import { cube } from "@electric-sql/pglite/contrib/cube";
-import { earthdistance } from "@electric-sql/pglite/contrib/earthdistance";
+
 import { PrismaClient } from "../../generated/prisma";
 import { PrismaPGlite } from "pglite-prisma-adapter";
 
@@ -46,13 +45,19 @@ export const getPgliteCompatibleSchemaSql = async (): Promise<string> => {
   return schemaSqlPromise;
 };
 
-export const createPglitePrismaForTest = async () => {
+export const createPgliteForTest = async () => {
   const db = new PGlite({
     dataDir: "memory://",
-    extensions: { btree_gist, cube, earthdistance },
+    extensions: { btree_gist },
   });
 
   await db.exec(await getPgliteCompatibleSchemaSql());
+
+  return db;
+};
+
+export const createPglitePrismaForTest = async () => {
+  const db = await createPgliteForTest();
 
   const adapter = new PrismaPGlite(db);
   const prisma = new PrismaClient({ adapter: adapter as never });
