@@ -1,8 +1,11 @@
 import { env } from "@/env";
-import { PrismaClient } from "../../generated/prisma";
+import { PrismaClient as PrismaClientGenerated } from "../../generated/prisma";
+
+export const PrismaClient = PrismaClientGenerated;
+export type PrismaClient = PrismaClientGenerated
 
 const createPrismaClient = () =>
-  new PrismaClient({
+  new PrismaClientGenerated({
     log:
       env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   });

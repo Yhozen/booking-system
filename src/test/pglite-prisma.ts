@@ -7,7 +7,7 @@ import { btree_gist } from "@electric-sql/pglite/contrib/btree_gist";
 import { cube } from "@electric-sql/pglite/contrib/cube";
 import { earthdistance } from "@electric-sql/pglite/contrib/earthdistance";
 
-import { PrismaClient } from "../../generated/prisma";
+import { PrismaClient } from "@/server/db";
 import { PrismaPGlite } from "pglite-prisma-adapter";
 
 const execFileAsync = promisify(execFile);

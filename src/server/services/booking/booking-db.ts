@@ -1,6 +1,6 @@
 import type { PGlite } from "@electric-sql/pglite";
 
-import type { PrismaClient } from "../../../../generated/prisma";
+import type { PrismaClient } from "@/server/db";
 
 export type SqlQueryResult<T> = {
   rows: T[];
