@@ -2,34 +2,20 @@
 
 import { afterAll, expect, it } from "vitest";
 
+import {
+  createProvider,
+  createService,
+} from "@/server/db/booking/test-helpers";
 import { createBookingDbForTest } from "@/test/pglite-booking";
 
 const { db, cleanup } = await createBookingDbForTest();
 
 afterAll(cleanup);
 
-const createProvider = async (name: string) => {
-  const provider = await db.query<{ id: number }>(
-    `insert into users (display_name, timezone, default_capacity)
-     values ('${name}', 'UTC', 1)
-     returning id`,
-  );
-
-  return provider.rows[0]!.id;
-};
-
-const createService = async (providerUserId: number, name: string) => {
-  const service = await db.query<{ id: number }>(
-    `insert into services (provider_user_id, name, duration_minutes)
-     values (${providerUserId}, '${name}', 30)
-     returning id`,
-  );
-
-  return service.rows[0]!.id;
-};
-
 it("rejects overlapping global blocks for same provider", async () => {
-  const providerUserId = await createProvider("Provider A");
+  const providerUserId = await createProvider(db, {
+    displayName: "Provider A",
+  });
 
   await db.query(
     `insert into availability_blocks (provider_user_id, service_id, slot, source)
@@ -55,8 +41,8 @@ it("rejects overlapping global blocks for same provider", async () => {
 });
 
 it("allows overlap for different providers", async () => {
-  const providerAId = await createProvider("Provider B1");
-  const providerBId = await createProvider("Provider B2");
+  const providerAId = await createProvider(db, { displayName: "Provider B1" });
+  const providerBId = await createProvider(db, { displayName: "Provider B2" });
 
   await db.query(
     `insert into availability_blocks (provider_user_id, service_id, slot, source)
@@ -82,8 +68,12 @@ it("allows overlap for different providers", async () => {
 });
 
 it("rejects overlapping blocks for same provider and same service scope", async () => {
-  const providerUserId = await createProvider("Provider B3");
-  const serviceId = await createService(providerUserId, "Service D");
+  const providerUserId = await createProvider(db, {
+    displayName: "Provider B3",
+  });
+  const serviceId = await createService(db, providerUserId, {
+    name: "Service D",
+  });
 
   await db.query(
     `insert into availability_blocks (provider_user_id, service_id, slot, source)
@@ -109,9 +99,15 @@ it("rejects overlapping blocks for same provider and same service scope", async 
 });
 
 it("allows overlapping blocks for same provider and different service scopes", async () => {
-  const providerUserId = await createProvider("Provider B4");
-  const serviceAId = await createService(providerUserId, "Service E");
-  const serviceBId = await createService(providerUserId, "Service F");
+  const providerUserId = await createProvider(db, {
+    displayName: "Provider B4",
+  });
+  const serviceAId = await createService(db, providerUserId, {
+    name: "Service E",
+  });
+  const serviceBId = await createService(db, providerUserId, {
+    name: "Service F",
+  });
 
   await db.query(
     `insert into availability_blocks (provider_user_id, service_id, slot, source)
@@ -137,9 +133,15 @@ it("allows overlapping blocks for same provider and different service scopes", a
 });
 
 it("allows overlap for same provider when service scopes differ", async () => {
-  const providerUserId = await createProvider("Provider C");
-  const serviceAId = await createService(providerUserId, "Service A");
-  const serviceBId = await createService(providerUserId, "Service B");
+  const providerUserId = await createProvider(db, {
+    displayName: "Provider C",
+  });
+  const serviceAId = await createService(db, providerUserId, {
+    name: "Service A",
+  });
+  const serviceBId = await createService(db, providerUserId, {
+    name: "Service B",
+  });
 
   await db.query(
     `insert into availability_windows (provider_user_id, service_id, slot, source)
@@ -165,8 +167,12 @@ it("allows overlap for same provider when service scopes differ", async () => {
 });
 
 it("rejects overlapping windows for same provider and same service scope", async () => {
-  const providerUserId = await createProvider("Provider D");
-  const serviceId = await createService(providerUserId, "Scoped Service");
+  const providerUserId = await createProvider(db, {
+    displayName: "Provider D",
+  });
+  const serviceId = await createService(db, providerUserId, {
+    name: "Scoped Service",
+  });
 
   await db.query(
     `insert into availability_windows (provider_user_id, service_id, slot, source)
@@ -192,8 +198,12 @@ it("rejects overlapping windows for same provider and same service scope", async
 });
 
 it("allows overlap for same provider between global and service-scoped windows", async () => {
-  const providerUserId = await createProvider("Provider E");
-  const serviceId = await createService(providerUserId, "Service C");
+  const providerUserId = await createProvider(db, {
+    displayName: "Provider E",
+  });
+  const serviceId = await createService(db, providerUserId, {
+    name: "Service C",
+  });
 
   await db.query(
     `insert into availability_windows (provider_user_id, service_id, slot, source)

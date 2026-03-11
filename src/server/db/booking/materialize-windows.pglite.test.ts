@@ -2,33 +2,17 @@
 
 import { afterAll, expect, it } from "vitest";
 
+import { createProviderAndService } from "@/server/db/booking/test-helpers";
 import { createBookingDbForTest } from "@/test/pglite-booking";
 
 const { db, cleanup } = await createBookingDbForTest();
 
 afterAll(cleanup);
 
-const createProviderAndService = async (timezone = "UTC") => {
-  const provider = await db.query<{ id: number }>(
-    `insert into users (display_name, timezone, default_capacity)
-     values ('Provider', '${timezone}', 1)
-     returning id`,
-  );
-
-  const service = await db.query<{ id: number }>(
-    `insert into services (provider_user_id, name, duration_minutes)
-     values (${provider.rows[0]!.id}, 'Consultation', 30)
-     returning id`,
-  );
-
-  return {
-    providerUserId: provider.rows[0]!.id,
-    serviceId: service.rows[0]!.id,
-  };
-};
-
 it("materializes generated windows for an upcoming range from active weekly rules", async () => {
-  const { providerUserId } = await createProviderAndService("America/New_York");
+  const { providerUserId } = await createProviderAndService(db, {
+    timezone: "America/New_York",
+  });
 
   const rule = await db.query<{ id: number }>(
     `insert into weekly_availability_rules (
@@ -83,7 +67,7 @@ it("materializes generated windows for an upcoming range from active weekly rule
 });
 
 it("is idempotent when rerun for the same date range", async () => {
-  const { providerUserId } = await createProviderAndService();
+  const { providerUserId } = await createProviderAndService(db);
 
   await db.query(
     `insert into weekly_availability_rules (
@@ -126,7 +110,7 @@ it("is idempotent when rerun for the same date range", async () => {
 });
 
 it("keeps manual windows while rematerializing generated windows", async () => {
-  const { providerUserId } = await createProviderAndService();
+  const { providerUserId } = await createProviderAndService(db);
 
   const rule = await db.query<{ id: number }>(
     `insert into weekly_availability_rules (

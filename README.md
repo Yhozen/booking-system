@@ -37,4 +37,4 @@ It focuses on reliable scheduling rules, capacity-aware booking, and a clean ser
 ## Notes
 
 Some booking features rely on PostgreSQL capabilities that are not fully expressible in Prisma schema alone.
-Those parts are implemented in custom SQL migrations and exercised in database-level tests.
+Prisma migrations are the source of truth for those SQL features, and booking DB tests validate those migration-level invariants.

@@ -2,33 +2,15 @@
 
 import { afterAll, expect, it } from "vitest";
 
+import { createProviderAndService } from "@/server/db/booking/test-helpers";
 import { createBookingDbForTest } from "@/test/pglite-booking";
 
 const { db, cleanup } = await createBookingDbForTest();
 
 afterAll(cleanup);
 
-const createProviderAndService = async () => {
-  const provider = await db.query<{ id: number }>(
-    `insert into users (display_name, timezone, default_capacity)
-     values ('Provider', 'UTC', 1)
-     returning id`,
-  );
-
-  const service = await db.query<{ id: number }>(
-    `insert into services (provider_user_id, name, duration_minutes)
-     values (${provider.rows[0]!.id}, 'Consultation', 30)
-     returning id`,
-  );
-
-  return {
-    providerUserId: provider.rows[0]!.id,
-    serviceId: service.rows[0]!.id,
-  };
-};
-
 it("rejects non-half-hour booking slots", async () => {
-  const { providerUserId, serviceId } = await createProviderAndService();
+  const { providerUserId, serviceId } = await createProviderAndService(db);
 
   await expect(
     db.query(
@@ -50,7 +32,7 @@ it("rejects non-half-hour booking slots", async () => {
 });
 
 it("rejects non-canonical booking slot bounds", async () => {
-  const { providerUserId, serviceId } = await createProviderAndService();
+  const { providerUserId, serviceId } = await createProviderAndService(db);
 
   await expect(
     db.query(
@@ -72,7 +54,7 @@ it("rejects non-canonical booking slot bounds", async () => {
 });
 
 it("rejects non-canonical availability window slot bounds", async () => {
-  const { providerUserId, serviceId } = await createProviderAndService();
+  const { providerUserId, serviceId } = await createProviderAndService(db);
 
   await expect(
     db.query(
@@ -92,7 +74,7 @@ it("rejects non-canonical availability window slot bounds", async () => {
 });
 
 it("rejects non-canonical availability block slot bounds", async () => {
-  const { providerUserId, serviceId } = await createProviderAndService();
+  const { providerUserId, serviceId } = await createProviderAndService(db);
 
   await expect(
     db.query(
@@ -112,7 +94,7 @@ it("rejects non-canonical availability block slot bounds", async () => {
 });
 
 it("stores generated duration from booking slot", async () => {
-  const { providerUserId, serviceId } = await createProviderAndService();
+  const { providerUserId, serviceId } = await createProviderAndService(db);
 
   const inserted = await db.query<{ id: number }>(
     `insert into bookings (

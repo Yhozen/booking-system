@@ -2,6 +2,10 @@
 
 import { afterAll, expect, it } from "vitest";
 
+import {
+  createProvider,
+  createService,
+} from "@/server/db/booking/test-helpers";
 import { createBookingDbForTest } from "@/test/pglite-booking";
 
 const { db, cleanup } = await createBookingDbForTest();
@@ -9,21 +13,12 @@ const { db, cleanup } = await createBookingDbForTest();
 afterAll(cleanup);
 
 it("returns weekly calendar rows by overlap query", async () => {
-  const provider = await db.query<{ id: number }>(
-    `insert into users (display_name, timezone, default_capacity)
-     values ('Calendar Provider', 'UTC', 1)
-     returning id`,
-  );
-
-  const providerUserId = provider.rows[0]!.id;
-
-  const service = await db.query<{ id: number }>(
-    `insert into services (provider_user_id, name, duration_minutes)
-     values (${providerUserId}, 'Calendar Service', 30)
-     returning id`,
-  );
-
-  const serviceId = service.rows[0]!.id;
+  const providerUserId = await createProvider(db, {
+    displayName: "Calendar Provider",
+  });
+  const serviceId = await createService(db, providerUserId, {
+    name: "Calendar Service",
+  });
 
   await db.query(
     `insert into bookings (provider_user_id, service_id, status, slot, customer_name)
@@ -33,23 +28,18 @@ it("returns weekly calendar rows by overlap query", async () => {
        (${providerUserId}, ${serviceId}, 'confirmed', tstzrange('2026-03-23 00:00+00', '2026-03-23 00:30+00', '[)'), 'Outside Week')`,
   );
 
-  const otherProvider = await db.query<{ id: number }>(
-    `insert into users (display_name, timezone, default_capacity)
-     values ('Other Provider', 'UTC', 1)
-     returning id`,
-  );
-
-  const otherService = await db.query<{ id: number }>(
-    `insert into services (provider_user_id, name, duration_minutes)
-     values (${otherProvider.rows[0]!.id}, 'Other Service', 30)
-     returning id`,
-  );
+  const otherProviderId = await createProvider(db, {
+    displayName: "Other Provider",
+  });
+  const otherServiceId = await createService(db, otherProviderId, {
+    name: "Other Service",
+  });
 
   await db.query(
     `insert into bookings (provider_user_id, service_id, status, slot, customer_name)
      values (
-       ${otherProvider.rows[0]!.id},
-       ${otherService.rows[0]!.id},
+        ${otherProviderId},
+        ${otherServiceId},
        'confirmed',
        tstzrange('2026-03-18 10:00+00', '2026-03-18 10:30+00', '[)'),
        'Other Provider Booking'

@@ -2,6 +2,10 @@
 
 import { afterAll, expect, it } from "vitest";
 
+import {
+  createProvider,
+  createService,
+} from "@/server/db/booking/test-helpers";
 import { createBookingDbForTest } from "@/test/pglite-booking";
 
 const { db, cleanup } = await createBookingDbForTest();
@@ -35,22 +39,9 @@ it("creates core booking schema tables in public", async () => {
 });
 
 it("rejects booking rows with service owned by another provider", async () => {
-  const providerA = await db.query<{ id: number }>(
-    `insert into users (display_name, timezone, default_capacity)
-     values ('Provider A', 'UTC', 1)
-     returning id`,
-  );
-  const providerB = await db.query<{ id: number }>(
-    `insert into users (display_name, timezone, default_capacity)
-     values ('Provider B', 'UTC', 1)
-     returning id`,
-  );
-
-  const serviceForProviderA = await db.query<{ id: number }>(
-    `insert into services (provider_user_id, name, duration_minutes)
-     values (${providerA.rows[0]!.id}, 'Consultation', 30)
-     returning id`,
-  );
+  const providerAId = await createProvider(db, { displayName: "Provider A" });
+  const providerBId = await createProvider(db, { displayName: "Provider B" });
+  const serviceForProviderAId = await createService(db, providerAId);
 
   await expect(
     db.query(
@@ -61,8 +52,8 @@ it("rejects booking rows with service owned by another provider", async () => {
          slot,
          customer_name
        ) values (
-         ${providerB.rows[0]!.id},
-         ${serviceForProviderA.rows[0]!.id},
+          ${providerBId},
+          ${serviceForProviderAId},
          'pending',
          tstzrange('2026-01-01 10:00:00+00', '2026-01-01 10:30:00+00', '[)'),
          'Alex Customer'
@@ -72,11 +63,7 @@ it("rejects booking rows with service owned by another provider", async () => {
 });
 
 it("rejects weekly availability rule with non-zero minutes/seconds", async () => {
-  const provider = await db.query<{ id: number }>(
-    `insert into users (display_name, timezone, default_capacity)
-     values ('Provider C', 'UTC', 1)
-     returning id`,
-  );
+  const providerId = await createProvider(db, { displayName: "Provider C" });
 
   await expect(
     db.query(
@@ -87,7 +74,7 @@ it("rejects weekly availability rule with non-zero minutes/seconds", async () =>
          start_local,
          end_local
        ) values (
-         ${provider.rows[0]!.id},
+          ${providerId},
          null,
          1,
          '09:15:00',

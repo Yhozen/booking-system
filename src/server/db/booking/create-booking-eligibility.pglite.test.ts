@@ -2,33 +2,15 @@
 
 import { afterAll, expect, it } from "vitest";
 
+import { createProviderAndService } from "@/server/db/booking/test-helpers";
 import { createBookingDbForTest } from "@/test/pglite-booking";
 
 const { db, cleanup } = await createBookingDbForTest();
 
 afterAll(cleanup);
 
-const createProviderAndService = async (bookingHorizonDays = 60) => {
-  const provider = await db.query<{ id: number }>(
-    `insert into users (display_name, timezone, default_capacity, booking_horizon_days)
-     values ('Provider', 'UTC', 1, ${bookingHorizonDays})
-     returning id`,
-  );
-
-  const service = await db.query<{ id: number }>(
-    `insert into services (provider_user_id, name, duration_minutes)
-     values (${provider.rows[0]!.id}, 'Consultation', 30)
-     returning id`,
-  );
-
-  return {
-    providerUserId: provider.rows[0]!.id,
-    serviceId: service.rows[0]!.id,
-  };
-};
-
 it("rejects booking outside horizon", async () => {
-  const { providerUserId, serviceId } = await createProviderAndService();
+  const { providerUserId, serviceId } = await createProviderAndService(db);
 
   await db.query(
     `insert into availability_windows (provider_user_id, service_id, slot, source)
@@ -61,7 +43,7 @@ it("rejects booking outside horizon", async () => {
 });
 
 it("rejects booking exactly at horizon boundary", async () => {
-  const { providerUserId, serviceId } = await createProviderAndService();
+  const { providerUserId, serviceId } = await createProviderAndService(db);
 
   await expect(
     db.query(
@@ -80,7 +62,7 @@ it("rejects booking exactly at horizon boundary", async () => {
 });
 
 it("rejects booking for inactive service", async () => {
-  const { providerUserId, serviceId } = await createProviderAndService();
+  const { providerUserId, serviceId } = await createProviderAndService(db);
 
   await db.query(
     `update services set is_active = false where id = ${serviceId}`,
@@ -117,8 +99,8 @@ it("rejects booking for inactive service", async () => {
 });
 
 it("rejects booking when service does not belong to provider", async () => {
-  const providerA = await createProviderAndService();
-  const providerB = await createProviderAndService();
+  const providerA = await createProviderAndService(db);
+  const providerB = await createProviderAndService(db);
 
   await expect(
     db.query(
@@ -137,7 +119,7 @@ it("rejects booking when service does not belong to provider", async () => {
 });
 
 it("rejects booking without covering availability window", async () => {
-  const { providerUserId, serviceId } = await createProviderAndService();
+  const { providerUserId, serviceId } = await createProviderAndService(db);
 
   const otherService = await db.query<{ id: number }>(
     `insert into services (provider_user_id, name, duration_minutes)
@@ -176,7 +158,7 @@ it("rejects booking without covering availability window", async () => {
 });
 
 it("rejects booking overlapping a relevant availability block", async () => {
-  const { providerUserId, serviceId } = await createProviderAndService();
+  const { providerUserId, serviceId } = await createProviderAndService(db);
 
   await db.query(
     `insert into availability_windows (provider_user_id, service_id, slot, source)
@@ -223,7 +205,7 @@ it("rejects booking overlapping a relevant availability block", async () => {
 });
 
 it("accepts valid booking and returns id", async () => {
-  const { providerUserId, serviceId } = await createProviderAndService();
+  const { providerUserId, serviceId } = await createProviderAndService(db);
 
   await db.query(
     `insert into availability_windows (provider_user_id, service_id, slot, source)

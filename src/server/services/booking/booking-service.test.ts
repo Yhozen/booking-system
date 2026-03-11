@@ -2,11 +2,11 @@
 
 import { afterAll, expect, it } from "vitest";
 
-import { createPgliteBookingDb } from "@/server/services/booking/booking-db";
+import { createPrismaBookingDb } from "@/server/services/booking/booking-db";
 import { BookingService } from "@/server/services/booking/booking-service";
-import { createBookingDbForTest } from "@/test/pglite-booking";
+import { createBookingPrismaForTest } from "@/test/pglite-booking";
 
-const { db, cleanup } = await createBookingDbForTest();
+const { db, prisma, cleanup } = await createBookingPrismaForTest();
 
 afterAll(cleanup);
 
@@ -31,7 +31,7 @@ const createProviderAndService = async () => {
 
 it("creates a booking through the service", async () => {
   const { providerUserId, serviceId } = await createProviderAndService();
-  const bookingService = new BookingService(createPgliteBookingDb(db));
+  const bookingService = new BookingService(createPrismaBookingDb(prisma));
 
   const slotStart = new Date("2026-03-20T10:00:00.000Z");
   const slotEnd = new Date("2026-03-20T10:30:00.000Z");
@@ -60,7 +60,7 @@ it("creates a booking through the service", async () => {
 
 it("materializes windows through the service", async () => {
   const { providerUserId } = await createProviderAndService();
-  const bookingService = new BookingService(createPgliteBookingDb(db));
+  const bookingService = new BookingService(createPrismaBookingDb(prisma));
 
   await db.query(
     `insert into weekly_availability_rules (
