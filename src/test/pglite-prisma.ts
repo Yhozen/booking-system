@@ -45,11 +45,17 @@ export const getPgliteCompatibleSchemaSql = async (): Promise<string> => {
   return schemaSqlPromise;
 };
 
-export const createPgliteForTest = async () => {
+export const createRawPgliteForTest = async () => {
   const db = new PGlite({
     dataDir: "memory://",
     extensions: { btree_gist, cube, earthdistance },
   });
+
+  return db;
+};
+
+export const createPgliteForTest = async () => {
+  const db = await createRawPgliteForTest();
 
   await db.exec(await getPgliteCompatibleSchemaSql());
 
