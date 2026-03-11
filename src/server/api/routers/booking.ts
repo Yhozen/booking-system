@@ -56,14 +56,7 @@ export const bookingRouter = createTRPCRouter({
       z.object({
         startDate: z.string().datetime({ offset: true }),
         endDate: z.string().datetime({ offset: true }),
-      }).refine(
-        ({ startDate, endDate }) =>
-          new Date(startDate).getTime() < new Date(endDate).getTime(),
-        {
-          message: "startDate must be before endDate",
-          path: ["endDate"],
-        },
-      ),
+      }),
     )
     .query(async ({ ctx, input }) => {
       const startDate = new Date(input.startDate);
@@ -76,6 +69,7 @@ export const bookingRouter = createTRPCRouter({
           provider_name: string;
           service_id: string;
           service_name: string;
+          customer_name: string;
           status: string;
           slot_start: Date;
           slot_end: Date;
@@ -87,6 +81,7 @@ export const bookingRouter = createTRPCRouter({
            u.display_name as provider_name,
            b.service_id::text as service_id,
            s.name as service_name,
+           b.customer_name,
            b.status,
            lower(b.slot) as slot_start,
            upper(b.slot) as slot_end
@@ -107,6 +102,7 @@ export const bookingRouter = createTRPCRouter({
         providerName: row.provider_name,
         serviceId: row.service_id,
         serviceName: row.service_name,
+        customerName: row.customer_name,
         status: row.status,
         slotStart: row.slot_start.toISOString(),
         slotEnd: row.slot_end.toISOString(),

@@ -15,6 +15,7 @@ export type WeekViewBooking = {
   id: string;
   providerName: string;
   serviceName: string;
+  customerName: string;
   status: BookingStatus;
   slotStart: string;
   slotEnd: string;
@@ -123,10 +124,7 @@ const buildBookingSegments = (
       const clippedStart = bookingStart > dayStart ? bookingStart : dayStart;
       const clippedEnd = bookingEnd < dayEnd ? bookingEnd : dayEnd;
       const minutesStart = toMinutesFromDayStart(clippedStart);
-      const minutesEnd =
-        clippedEnd.getTime() === dayEnd.getTime()
-          ? 24 * 60
-          : toMinutesFromDayStart(clippedEnd);
+      const minutesEnd = toMinutesFromDayStart(clippedEnd);
       const top = (minutesStart / 60) * HOUR_HEIGHT;
       const height = Math.max(
         ((minutesEnd - minutesStart) / 60) * HOUR_HEIGHT,
@@ -271,12 +269,10 @@ export function WeekView({ weekStart, bookings, className }: WeekViewProps) {
                         width: `calc(${width}% - 4px)`,
                         height: `${segment.height}px`,
                       }}
-                      title={`${segment.serviceName} (${segment.status})`}
+                      title={`${segment.customerName} (${segment.serviceName})`}
                     >
-                      <p className="truncate text-xs font-semibold">{segment.serviceName}</p>
-                      <p className="truncate text-[11px] opacity-90">
-                        {segment.status.replaceAll("_", " ")}
-                      </p>
+                      <p className="truncate text-xs font-semibold">{segment.customerName}</p>
+                      <p className="truncate text-[11px] opacity-90">{segment.serviceName}</p>
                       <p className="truncate text-[10px] opacity-80">
                         {formatRange(segment.start, segment.end)}
                       </p>
