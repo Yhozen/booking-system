@@ -1,5 +1,8 @@
 "use client";
 
+import { startOfDay } from "date-fns";
+
+import { addDays, getCalendarDayOffset } from "@/lib/week-date-utils";
 import { cn } from "@/lib/utils";
 
 const DAYS_IN_WEEK = 7;
@@ -38,23 +41,14 @@ type BookingSegment = WeekViewBooking & {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  pending: "border-amber-400/60 bg-amber-500/15 text-amber-900 dark:text-amber-100",
+  pending:
+    "border-amber-400/60 bg-amber-500/15 text-amber-900 dark:text-amber-100",
   confirmed:
     "border-emerald-500/60 bg-emerald-500/15 text-emerald-900 dark:text-emerald-100",
-  cancelled: "border-rose-500/60 bg-rose-500/15 text-rose-900 dark:text-rose-100",
-  no_show: "border-slate-500/60 bg-slate-500/15 text-slate-900 dark:text-slate-100",
-};
-
-const addDays = (value: Date, days: number) => {
-  const next = new Date(value);
-  next.setDate(next.getDate() + days);
-  return next;
-};
-
-const startOfDay = (value: Date) => {
-  const next = new Date(value);
-  next.setHours(0, 0, 0, 0);
-  return next;
+  cancelled:
+    "border-rose-500/60 bg-rose-500/15 text-rose-900 dark:text-rose-100",
+  no_show:
+    "border-slate-500/60 bg-slate-500/15 text-slate-900 dark:text-slate-100",
 };
 
 export const getStartOfWeek = (value: Date, weekStartsOn = 1) => {
@@ -187,9 +181,7 @@ export function WeekView({ weekStart, bookings, className }: WeekViewProps) {
   const weekEnd = addDays(weekStart, DAYS_IN_WEEK);
   const now = new Date();
   const isNowInWeek = now >= weekStart && now < weekEnd;
-  const nowDayIndex = isNowInWeek
-    ? Math.floor((startOfDay(now).getTime() - weekStart.getTime()) / 86400000)
-    : -1;
+  const nowDayIndex = isNowInWeek ? getCalendarDayOffset(weekStart, now) : -1;
   const nowTop = (toMinutesFromDayStart(now) / 60) * HOUR_HEIGHT;
   const dayHeight = HOUR_HEIGHT * 24;
 
@@ -197,38 +189,50 @@ export function WeekView({ weekStart, bookings, className }: WeekViewProps) {
     <section
       data-testid="week-view"
       className={cn(
-        "overflow-hidden rounded-xl border border-border bg-card text-card-foreground",
+        "border-border bg-card text-card-foreground overflow-hidden rounded-xl border",
         className,
       )}
     >
       <div
-        className="grid border-b border-border bg-muted/40"
-        style={{ gridTemplateColumns: `${TIME_AXIS_WIDTH}px repeat(7, minmax(0, 1fr))` }}
+        className="border-border bg-muted/40 grid border-b"
+        style={{
+          gridTemplateColumns: `${TIME_AXIS_WIDTH}px repeat(7, minmax(0, 1fr))`,
+        }}
       >
-        <div className="border-r border-border p-2 text-right text-xs text-muted-foreground">
+        <div className="border-border text-muted-foreground border-r p-2 text-right text-xs">
           Local
         </div>
         {weekDays.map((day) => (
-          <div key={day.toISOString()} className="border-r border-border p-2 last:border-r-0">
-            <p className="text-xs text-muted-foreground">{formatDayLabel(day)}</p>
+          <div
+            key={day.toISOString()}
+            className="border-border border-r p-2 last:border-r-0"
+          >
+            <p className="text-muted-foreground text-xs">
+              {formatDayLabel(day)}
+            </p>
             <p className="text-sm font-semibold">{formatDayNumber(day)}</p>
           </div>
         ))}
       </div>
 
-      <div className="max-h-[72vh] overflow-auto" data-testid="week-view-scroll">
+      <div
+        className="max-h-[72vh] overflow-auto"
+        data-testid="week-view-scroll"
+      >
         <div
           className="grid"
-          style={{ gridTemplateColumns: `${TIME_AXIS_WIDTH}px repeat(7, minmax(0, 1fr))` }}
+          style={{
+            gridTemplateColumns: `${TIME_AXIS_WIDTH}px repeat(7, minmax(0, 1fr))`,
+          }}
         >
-          <div className="border-r border-border bg-muted/20">
+          <div className="border-border bg-muted/20 border-r">
             {HOURS.map((hour) => (
               <div
                 key={hour}
-                className="border-b border-border/70 pr-2 text-right text-xs text-muted-foreground"
+                className="border-border/70 text-muted-foreground border-b pr-2 text-right text-xs"
                 style={{ height: `${HOUR_HEIGHT}px` }}
               >
-                <span className="-translate-y-2 inline-block bg-card px-1">
+                <span className="bg-card inline-block -translate-y-2 px-1">
                   {formatHourLabel(hour)}
                 </span>
               </div>
@@ -236,17 +240,19 @@ export function WeekView({ weekStart, bookings, className }: WeekViewProps) {
           </div>
 
           {weekDays.map((day, dayIndex) => {
-            const daySegments = segments.filter((segment) => segment.dayIndex === dayIndex);
+            const daySegments = segments.filter(
+              (segment) => segment.dayIndex === dayIndex,
+            );
             return (
               <div
                 key={day.toISOString()}
-                className="relative border-r border-border/70 bg-background last:border-r-0"
+                className="border-border/70 bg-background relative border-r last:border-r-0"
                 style={{ height: `${dayHeight}px` }}
               >
                 {HOURS.map((hour) => (
                   <div
                     key={hour}
-                    className="border-b border-border/60"
+                    className="border-border/60 border-b"
                     style={{ height: `${HOUR_HEIGHT}px` }}
                   />
                 ))}
@@ -271,8 +277,12 @@ export function WeekView({ weekStart, bookings, className }: WeekViewProps) {
                       }}
                       title={`${segment.customerName} (${segment.serviceName})`}
                     >
-                      <p className="truncate text-xs font-semibold">{segment.customerName}</p>
-                      <p className="truncate text-[11px] opacity-90">{segment.serviceName}</p>
+                      <p className="truncate text-xs font-semibold">
+                        {segment.customerName}
+                      </p>
+                      <p className="truncate text-[11px] opacity-90">
+                        {segment.serviceName}
+                      </p>
                       <p className="truncate text-[10px] opacity-80">
                         {formatRange(segment.start, segment.end)}
                       </p>
@@ -294,7 +304,7 @@ export function WeekView({ weekStart, bookings, className }: WeekViewProps) {
 
       {bookings.length === 0 ? (
         <p
-          className="border-t border-border p-3 text-sm text-muted-foreground"
+          className="border-border text-muted-foreground border-t p-3 text-sm"
           data-testid="week-empty"
         >
           No bookings in this week.

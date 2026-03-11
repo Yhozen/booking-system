@@ -4,14 +4,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { WeekView, getStartOfWeek } from "@/components/week-view";
+import { addDays } from "@/lib/week-date-utils";
 import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
-
-const addDays = (value: Date, days: number) => {
-  const next = new Date(value);
-  next.setDate(next.getDate() + days);
-  return next;
-};
 
 const formatRange = (start: Date, end: Date) =>
   `${new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(start)} - ${new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(addDays(end, -1))}`;
@@ -40,10 +35,13 @@ export function BookingCalendar() {
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4 md:p-8">
-      <header className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 md:flex-row md:items-center md:justify-between">
+      <header className="border-border bg-card flex flex-col gap-3 rounded-xl border p-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-xl font-semibold">Bookings Week View</h1>
-          <p className="text-sm text-muted-foreground" data-testid="week-range-label">
+          <p
+            className="text-muted-foreground text-sm"
+            data-testid="week-range-label"
+          >
             {formatRange(weekStart, weekEnd)}
           </p>
         </div>
@@ -78,34 +76,48 @@ export function BookingCalendar() {
         </div>
       </header>
 
-      <div className="grid gap-3 rounded-xl border border-border bg-card p-4 text-sm md:grid-cols-4">
+      <div className="border-border bg-card grid gap-3 rounded-xl border p-4 text-sm md:grid-cols-4">
         <p>
-          Total: <span className="font-semibold" data-testid="stat-total">{statusCounts.total}</span>
+          Total:{" "}
+          <span className="font-semibold" data-testid="stat-total">
+            {statusCounts.total}
+          </span>
         </p>
         <p>
-          Confirmed: <span className="font-semibold" data-testid="stat-confirmed">{statusCounts.confirmed}</span>
+          Confirmed:{" "}
+          <span className="font-semibold" data-testid="stat-confirmed">
+            {statusCounts.confirmed}
+          </span>
         </p>
         <p>
-          Pending: <span className="font-semibold" data-testid="stat-pending">{statusCounts.pending}</span>
+          Pending:{" "}
+          <span className="font-semibold" data-testid="stat-pending">
+            {statusCounts.pending}
+          </span>
         </p>
         <p>
-          Cancelled: <span className="font-semibold" data-testid="stat-cancelled">{statusCounts.cancelled}</span>
+          Cancelled:{" "}
+          <span className="font-semibold" data-testid="stat-cancelled">
+            {statusCounts.cancelled}
+          </span>
         </p>
       </div>
 
       {weekQuery.isError ? (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border p-4 text-sm">
           Failed to load bookings: {weekQuery.error.message}
         </div>
       ) : null}
 
       {weekQuery.isLoading ? (
-        <div className="rounded-lg border border-border p-6 text-sm text-muted-foreground">
+        <div className="border-border text-muted-foreground rounded-lg border p-6 text-sm">
           Loading week bookings...
         </div>
       ) : null}
 
-      {weekQuery.data ? <WeekView weekStart={weekStart} bookings={weekQuery.data} /> : null}
+      {weekQuery.data ? (
+        <WeekView weekStart={weekStart} bookings={weekQuery.data} />
+      ) : null}
     </div>
   );
 }
