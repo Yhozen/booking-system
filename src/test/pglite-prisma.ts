@@ -66,7 +66,7 @@ export const createPglitePrismaForTest = async () => {
   const db = await createPgliteForTest();
 
   const adapter = new PrismaPGlite(db);
-  const prisma = new PrismaClient({ adapter: adapter as never });
+  const prisma = new PrismaClient({ adapter });
 
   return {
     db,
