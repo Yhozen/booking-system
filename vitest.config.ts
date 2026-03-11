@@ -11,6 +11,7 @@ export default defineConfig({
     clearMocks: true,
     globalSetup: ["./src/test/global-setup.ts"],
     include: ["src/**/*.test.ts"],
+    exclude: ["e2e/**"],
     passWithNoTests: false,
     restoreMocks: true,
   },
