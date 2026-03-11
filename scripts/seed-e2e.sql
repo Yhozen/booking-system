@@ -14,43 +14,27 @@ values
     1,
     1,
     'confirmed',
-    tstzrange(
-      date_trunc('week', now()) + interval '1 day 09:00',
-      date_trunc('week', now()) + interval '1 day 09:30',
-      '[)'
-    ),
+    tstzrange('2026-03-10 09:00:00+00', '2026-03-10 09:30:00+00', '[)'),
     'Alice Johnson'
   ),
   (
     1,
     1,
     'pending',
-    tstzrange(
-      date_trunc('week', now()) + interval '2 day 13:00',
-      date_trunc('week', now()) + interval '2 day 14:00',
-      '[)'
-    ),
+    tstzrange('2026-03-11 13:00:00+00', '2026-03-11 14:00:00+00', '[)'),
     'Ben Carter'
   ),
   (
     1,
     2,
     'confirmed',
-    tstzrange(
-      date_trunc('week', now()) + interval '2 day 14:00',
-      date_trunc('week', now()) + interval '2 day 15:00',
-      '[)'
-    ),
+    tstzrange('2026-03-11 14:00:00+00', '2026-03-11 15:00:00+00', '[)'),
     'Jane Doe'
   ),
   (
     1,
     2,
     'cancelled',
-    tstzrange(
-      date_trunc('week', now()) + interval '4 day 16:30',
-      date_trunc('week', now()) + interval '4 day 17:00',
-      '[)'
-    ),
+    tstzrange('2026-03-13 16:30:00+00', '2026-03-13 17:00:00+00', '[)'),
     'Mia Lopez'
   );

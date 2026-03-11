@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
+const localBaseURL = "http://127.0.0.1:3000";
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? localBaseURL;
+const useLocalWebServer = baseURL === localBaseURL;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -25,14 +27,16 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
   ],
-  webServer: {
-    command: "bun run dev -- --port 3000",
-    url: baseURL,
-    timeout: 180_000,
-    reuseExistingServer: !process.env.CI,
-    env: {
-      ...process.env,
-      TZ: process.env.TZ ?? "UTC",
-    },
-  },
+  webServer: useLocalWebServer
+    ? {
+        command: "bun run dev -- --port 3000",
+        url: localBaseURL,
+        timeout: 180_000,
+        reuseExistingServer: !process.env.CI,
+        env: {
+          ...process.env,
+          TZ: process.env.TZ ?? "UTC",
+        },
+      }
+    : undefined,
 });

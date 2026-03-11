@@ -8,7 +8,7 @@
     "check": "next lint && tsc --noEmit",
     "db:generate": "prisma migrate dev",
     "db:migrate": "prisma migrate deploy",
-    "db:seed:e2e": "prisma db execute --schema prisma/schema.prisma --file scripts/seed-e2e.sql",
+    "db:seed:e2e": "bun ./scripts/seed-e2e.mjs",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "dev": "next dev --turbo",

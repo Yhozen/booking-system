@@ -2,6 +2,7 @@
 
 import "dotenv/config";
 
+import type { TRPCError } from "@trpc/server";
 import { afterAll, expect, it } from "vitest";
 
 import { createCaller } from "@/server/api/root";
@@ -113,10 +114,30 @@ it("returns week bookings via booking router overlap query", async () => {
     endDate: "2026-03-23T00:00:00.000Z",
   });
 
-  const names = result.map((row) => row.customerName);
+  const starts = result.map((row) => row.slotStart);
 
-  expect(names).toEqual(
-    expect.arrayContaining(["Week Start", "Week End Boundary"]),
+  expect(starts).toEqual(
+    expect.arrayContaining([
+      "2026-03-16T09:00:00.000Z",
+      "2026-03-22T23:30:00.000Z",
+    ]),
   );
-  expect(names).not.toContain("Outside Week");
+  expect(starts).not.toContain("2026-03-23T00:00:00.000Z");
+  expect(result.every((row) => !("customerName" in row))).toBe(true);
+});
+
+it("rejects inverted date ranges for week query", async () => {
+  const caller = createCaller({
+    db: prisma,
+    headers: new Headers(),
+  });
+
+  await expect(
+    caller.booking.getWeek({
+      startDate: "2026-03-23T00:00:00.000Z",
+      endDate: "2026-03-16T00:00:00.000Z",
+    }),
+  ).rejects.toMatchObject({
+    code: "BAD_REQUEST",
+  } satisfies Partial<TRPCError>);
 });
