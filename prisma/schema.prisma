@@ -19,3 +19,113 @@ model Post {
 
     @@index([name])
 }
+
+model User {
+    id                 BigInt   @id @default(autoincrement())
+    displayName        String   @map("display_name")
+    timezone           String
+    defaultCapacity    Int      @map("default_capacity")
+    bookingHorizonDays Int      @default(60) @map("booking_horizon_days")
+    createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    services                Service[]
+    weeklyAvailabilityRules WeeklyAvailabilityRule[]
+    availabilityWindows     AvailabilityWindow[]
+    availabilityBlocks      AvailabilityBlock[]
+    bookings                Booking[]
+
+    @@map("users")
+}
+
+model Service {
+    id               BigInt   @id @default(autoincrement())
+    providerUserId   BigInt   @map("provider_user_id")
+    name             String
+    durationMinutes  Int      @map("duration_minutes")
+    capacityOverride Int?     @map("capacity_override")
+    isActive         Boolean  @default(true) @map("is_active")
+    createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    provider                User                     @relation(fields: [providerUserId], references: [id], onDelete: Cascade)
+    weeklyAvailabilityRules WeeklyAvailabilityRule[] @relation("WeeklyRuleService")
+    availabilityWindows     AvailabilityWindow[]     @relation("AvailabilityWindowService")
+    availabilityBlocks      AvailabilityBlock[]      @relation("AvailabilityBlockService")
+    bookings                Booking[]                @relation("BookingService")
+
+    @@unique([providerUserId, id], map: "services_provider_user_id_id_unique")
+    @@map("services")
+}
+
+model WeeklyAvailabilityRule {
+    id             BigInt   @id @default(autoincrement())
+    providerUserId BigInt   @map("provider_user_id")
+    serviceId      BigInt?  @map("service_id")
+    weekday        Int
+    startLocal     DateTime @map("start_local") @db.Time(6)
+    endLocal       DateTime @map("end_local") @db.Time(6)
+    isActive       Boolean  @default(true) @map("is_active")
+    createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    provider            User                 @relation(fields: [providerUserId], references: [id], onDelete: Cascade)
+    service             Service?             @relation("WeeklyRuleService", fields: [providerUserId, serviceId], references: [providerUserId, id], onDelete: Cascade)
+    availabilityWindows AvailabilityWindow[]
+
+    @@map("weekly_availability_rules")
+}
+
+model AvailabilityWindow {
+    id             BigInt                 @id @default(autoincrement())
+    providerUserId BigInt                 @map("provider_user_id")
+    serviceId      BigInt?                @map("service_id")
+    slot           Unsupported("tstzrange")
+    source         String
+    ruleId         BigInt?                @map("rule_id")
+    createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt      DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    provider User                   @relation(fields: [providerUserId], references: [id], onDelete: Cascade)
+    service  Service?               @relation("AvailabilityWindowService", fields: [providerUserId, serviceId], references: [providerUserId, id], onDelete: Cascade)
+    rule     WeeklyAvailabilityRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+
+    @@map("availability_windows")
+}
+
+model AvailabilityBlock {
+    id             BigInt                 @id @default(autoincrement())
+    providerUserId BigInt                 @map("provider_user_id")
+    serviceId      BigInt?                @map("service_id")
+    slot           Unsupported("tstzrange")
+    reason         String?
+    source         String
+    createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt      DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    provider User     @relation(fields: [providerUserId], references: [id], onDelete: Cascade)
+    service  Service? @relation("AvailabilityBlockService", fields: [providerUserId, serviceId], references: [providerUserId, id], onDelete: Cascade)
+
+    @@map("availability_blocks")
+}
+
+model Booking {
+    id                 BigInt                 @id @default(autoincrement())
+    providerUserId     BigInt                 @map("provider_user_id")
+    serviceId          BigInt                 @map("service_id")
+    status             String
+    slot               Unsupported("tstzrange")
+    duration           Unsupported("interval")
+    customerName       String                 @map("customer_name")
+    customerPhone      String?                @map("customer_phone")
+    customerEmail      String?                @map("customer_email")
+    cancelledAt        DateTime?              @map("cancelled_at") @db.Timestamptz(6)
+    cancellationReason String?                @map("cancellation_reason")
+    createdAt          DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt          DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    provider User    @relation(fields: [providerUserId], references: [id], onDelete: Cascade)
+    service  Service @relation("BookingService", fields: [providerUserId, serviceId], references: [providerUserId, id], onDelete: Cascade)
+
+    @@map("bookings")
+}
