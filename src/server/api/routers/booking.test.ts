@@ -91,3 +91,32 @@ it("materializes windows via booking router", async () => {
 
   expect(result.ok).toBe(true);
 });
+
+it("returns week bookings via booking router overlap query", async () => {
+  const { providerUserId, serviceId } = await createProviderAndService();
+
+  await db.query(
+    `insert into bookings (provider_user_id, service_id, status, slot, customer_name)
+     values
+       (${providerUserId}, ${serviceId}, 'confirmed', tstzrange('2026-03-16 09:00+00', '2026-03-16 09:30+00', '[)'), 'Week Start'),
+       (${providerUserId}, ${serviceId}, 'pending', tstzrange('2026-03-22 23:30+00', '2026-03-23 00:00+00', '[)'), 'Week End Boundary'),
+       (${providerUserId}, ${serviceId}, 'confirmed', tstzrange('2026-03-23 00:00+00', '2026-03-23 00:30+00', '[)'), 'Outside Week')`,
+  );
+
+  const caller = createCaller({
+    db: prisma,
+    headers: new Headers(),
+  });
+
+  const result = await caller.booking.getWeek({
+    startDate: "2026-03-16T00:00:00.000Z",
+    endDate: "2026-03-23T00:00:00.000Z",
+  });
+
+  const names = result.map((row) => row.customerName);
+
+  expect(names).toEqual(
+    expect.arrayContaining(["Week Start", "Week End Boundary"]),
+  );
+  expect(names).not.toContain("Outside Week");
+});
