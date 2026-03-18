@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("booking week view", () => {
-  test("renders seeded bookings and navigates weeks", async ({ page }) => {
+  test("renders seeded bookings, creates booking, and navigates weeks", async ({ page }) => {
     await page.goto("/");
 
     await expect(
@@ -14,6 +14,17 @@ test.describe("booking week view", () => {
     await expect(page.getByTestId("stat-cancelled")).toHaveText("1");
 
     await expect(page.getByText("Alice Johnson")).toBeVisible();
+
+    await page.getByTestId("create-customer-name").fill("E2E Booker");
+    await page.getByTestId("create-slot-time").fill("10:30");
+    await page.getByTestId("create-status").selectOption("confirmed");
+    await page.getByTestId("create-booking-submit").click();
+
+    await expect(page.getByTestId("create-booking-feedback")).toContainText(
+      "created successfully",
+    );
+    await expect(page.getByTestId("stat-total")).toHaveText("5");
+    await expect(page.getByText("E2E Booker")).toBeVisible();
 
     const weekScroll = page.getByTestId("week-view-scroll");
     await weekScroll.evaluate((element) => {
@@ -34,10 +45,10 @@ test.describe("booking week view", () => {
 
     await page.getByTestId("week-nav-prev").click();
 
-    await expect(page.getByTestId("stat-total")).toHaveText("4");
+    await expect(page.getByTestId("stat-total")).toHaveText("5");
     await weekScroll.evaluate((element) => {
       element.scrollTop = 0;
     });
-    await expect(page.getByText("Alice Johnson")).toBeVisible();
+    await expect(page.getByText("E2E Booker")).toBeVisible();
   });
 });
