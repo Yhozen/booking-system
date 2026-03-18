@@ -120,3 +120,48 @@ it("returns week bookings via booking router overlap query", async () => {
   );
   expect(names).not.toContain("Outside Week");
 });
+
+it("returns provider/service options for booking form", async () => {
+  const { providerUserId, serviceId } = await createProviderAndService();
+
+  const caller = createCaller({
+    db: prisma,
+    headers: new Headers(),
+  });
+
+  const result = await caller.booking.getFormOptions();
+  const provider = result.find((row) => row.providerUserId === providerUserId);
+
+  expect(provider).toBeDefined();
+  expect(provider?.services.some((service) => service.serviceId === serviceId)).toBe(
+    true,
+  );
+});
+
+it("creates booking from UI flow and auto-adds availability", async () => {
+  const { providerUserId, serviceId } = await createProviderAndService();
+
+  const caller = createCaller({
+    db: prisma,
+    headers: new Headers(),
+  });
+
+  const created = await caller.booking.createFromUi({
+    providerUserId,
+    serviceId,
+    customerName: "UI Flow Customer",
+    slotStart: "2026-03-20T10:30:00.000Z",
+    status: "confirmed",
+    ensureAvailabilityWindow: true,
+  });
+
+  expect(created.bookingId).toBeGreaterThan(0);
+  expect(created.slotEnd).toBe("2026-03-20T11:00:00.000Z");
+
+  const bookingRows = await db.query<{ customer_name: string }>(
+    `select customer_name
+     from bookings
+     where id = ${created.bookingId}`,
+  );
+  expect(bookingRows.rows[0]?.customer_name).toBe("UI Flow Customer");
+});
